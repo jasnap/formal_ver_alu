@@ -72,53 +72,29 @@ begin  -- architecture Behavioral
     variable range_of_rand: real := 100.0;
   begin
     -- insert signal assignments here
- --  for i in 0 to 1 loop
      if reset = '0' then 
         addr <= 0;
         data_in <= "0000000000000000";
         tvalid_in <= '0';
      else
         if Clk'event and Clk = '1' then
-        if tready_out = '1' then
-            if addr = 2 then
-                addr <= 0;
-                uniform(seed1, seed2, rand);
-                data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
-            end if;
-            if addr = 0 then
-                data_in <= "0000000000000000";
+            if tready_out = '1' then
                 tvalid_in <= '1';
-                addr <= addr + 1;
-             elsif addr < 2 then
+                if addr = 0 then
+                    data_in <= "0000000000000000";  
+                    addr <= addr + 1;
+                elsif addr = 1 then
                     uniform(seed1, seed2, rand);
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
-                    tvalid_in <= '1';
-                    addr <= addr + 1;       
+                    addr <= addr + 1;
+                 elsif addr = 2 then
+                    uniform(seed1, seed2, rand);
+                    data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
+                    addr <= 0;              
+                end if;    
             end if;
          end if;
       end if;
-        
---            case (addr) is
-            
---                when 0 => data_in <= "0000000000000000";
---                          tvalid_in <= '1';
---                          addr <= addr + 1;
-            
---                when 1 => uniform(seed1, seed2, rand);
---                          data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
---                          tvalid_in <= '1';
---                          addr <= addr + 1; 
-            
---                when 2 => uniform(seed1, seed2, rand);
---                          data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
---                          tvalid_in <= '1';
---                          addr <= 0;
-            
---                when others => null;
---            end case;
-        end if;
-      
-   -- end loop;
     wait until Clk = '1';
 
   end process WaveGen_Proc;
