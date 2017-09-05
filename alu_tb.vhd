@@ -35,7 +35,7 @@ end entity alu_tb;
 architecture Behavioral of alu_tb is
 
   -- component ports
-  signal data_in    : std_logic_vector(15 downto 0);
+  signal data_in    : std_logic_vector(7 downto 0);
   signal tvalid_in  : std_logic;
   signal reset      : std_logic;
   signal tready_in  : std_logic;
@@ -74,22 +74,22 @@ begin  -- architecture Behavioral
     -- insert signal assignments here
      if reset = '0' then 
         addr <= 0;
-        data_in <= "0000000000000000";
+        data_in <= "00000000";
         tvalid_in <= '0';
      else
         if Clk'event and Clk = '1' then
             if tready_out = '1' then
                 tvalid_in <= '1';
                 if addr = 0 then
-                    data_in <= "0000000000000000";  
+                    data_in <= "00000001";  
                     addr <= addr + 1;
                 elsif addr = 1 then
                     uniform(seed1, seed2, rand);
-                    data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
+                    data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
                     addr <= addr + 1;
                  elsif addr = 2 then
                     uniform(seed1, seed2, rand);
-                    data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 16));
+                    data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
                     addr <= 0;              
                 end if;    
             end if;
