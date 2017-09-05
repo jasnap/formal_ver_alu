@@ -39,6 +39,7 @@ architecture Behavioral of alu_tb is
   signal tvalid_in  : std_logic;
   signal reset      : std_logic;
   signal tready_in  : std_logic;
+  signal tlast_in   : std_logic;
   signal data_out   : std_logic_vector(15 downto 0);
   signal tvalid_out : std_logic;
   signal tready_out : std_logic;
@@ -57,6 +58,7 @@ begin  -- architecture Behavioral
       clk        => clk,
       reset      => reset,
       tready_in  => tready_in,
+      tlast_in   => tlast_in,
       data_out   => data_out,
       tvalid_out => tvalid_out,
       tready_out => tready_out);
@@ -76,13 +78,15 @@ begin  -- architecture Behavioral
         addr <= 0;
         data_in <= "00000000";
         tvalid_in <= '0';
+        tlast_in <= '0';
      else
         if Clk'event and Clk = '1' then
             if tready_out = '1' then
                 tvalid_in <= '1';
                 if addr = 0 then
-                    data_in <= "00000001";  
+                    data_in <= "00000000";  
                     addr <= addr + 1;
+                    tlast_in <= '0';
                 elsif addr = 1 then
                     uniform(seed1, seed2, rand);
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
@@ -90,7 +94,8 @@ begin  -- architecture Behavioral
                  elsif addr = 2 then
                     uniform(seed1, seed2, rand);
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
-                    addr <= 0;              
+                    addr <= 0;
+                    tlast_in <= '1';              
                 end if;    
             end if;
          end if;

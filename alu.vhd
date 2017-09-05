@@ -10,6 +10,7 @@ entity alu is
     clk        : in  std_logic;
     reset      : in  std_logic;
     tready_in  : in std_logic;
+    tlast_in   : in std_logic;
     data_out   : out std_logic_vector(15 downto 0);
     tvalid_out : out std_logic;
     tready_out : out  std_logic;
@@ -27,7 +28,8 @@ architecture Behavioral of alu is
   signal addr: integer := 0;
   signal a_plus_b: std_logic_vector(15 downto 0);
   signal a_minus_b: std_logic_vector(15 downto 0);
-  signal cout_sig : std_logic;
+  signal cout_sig : std_logic := '0';
+
 begin  -- architecture Behavioral
 
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) - signed(b_in(b_in'high) & b_in));
@@ -40,25 +42,27 @@ begin  -- architecture Behavioral
   begin  -- process
     if reset = '0' then                 -- asynchronous reset (active low)
       tready_out <= '1';
-      tvalid_out<= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
         if tvalid_in = '1' then
-            data_reg(addr) <= data_in;
-            if addr = 2 then
-                addr <= 0;
-                tready_out <= '0';
-            else
-                addr <= addr + 1;
-            end if;
+          case addr is
+            when 0 => op_code <= data_in(2 downto 0);
+                      addr <= addr + 1;
+            when 1 => a_in <= data_in;
+                      addr <= addr + 1;
+            when 2 => b_in <= data_in;
+                      tready_out <= '0';
+                      addr <= addr + 1;
+            when 3 => addr <= addr + 1;
+                      tvalid_out <= '1';
+            when 4 => addr <= 0;
+                      tready_out <= '1';
+                      tvalid_out <= '0';
+            when others => null;
+          end case;
         end if;       
     end if;
-    
   end process;
-  
-  op_code <= data_reg(0)(2 downto 0);
-  a_in <= data_reg(1);
-  b_in <= data_reg(2);
-  
+
 process(clk, op_code) is
 begin  -- process
     if clk'event and clk = '1' then
@@ -74,9 +78,9 @@ begin  -- process
         when "100" => result <= std_logic_vector(signed(a_minus_b) srl 1);      --2*(a-b)
                       cout_sig <= result(8);
         when others => null;
-      end case;
-       
+      end case;   
     end if;
+
  end process;
 data_out <= result;
 cout <= cout_sig;
