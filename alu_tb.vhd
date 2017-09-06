@@ -72,11 +72,12 @@ begin  -- architecture Behavioral
     variable seed1, seed2: positive;
     variable rand: real;
     variable range_of_rand: real := 100.0;
+    variable opc, tr_num: integer := 0;
   begin
     -- insert signal assignments here
      if reset = '0' then 
         addr <= 0;
-        data_in <= "00000000";
+        data_in <= std_logic_vector(to_unsigned(opc, 8));
         tvalid_in <= '0';
         tlast_in <= '0';
      else
@@ -84,9 +85,27 @@ begin  -- architecture Behavioral
             if tready_out = '1' then
                 tvalid_in <= '1';
                 if addr = 0 then
-                    data_in <= "00000000";  
+                    data_in <= std_logic_vector(to_unsigned(opc, 8));  
                     addr <= addr + 1;
                     tlast_in <= '0';
+                    if opc = 6 then
+                      if tr_num = 1 then 
+                       tr_num := 0;
+                        opc := 0;
+                      else 
+                      tr_num := tr_num + 1;
+                      end if;
+                    elsif opc = 5 then
+                      if tr_num = 1 then
+                        tr_num := 0;
+                        opc := 6;
+                      else 
+                      tr_num := tr_num + 1;
+                      end if;
+                    else 
+                      opc := opc + 1;
+                    end if; 
+
                 elsif addr = 1 then
                     uniform(seed1, seed2, rand);
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
@@ -96,7 +115,7 @@ begin  -- architecture Behavioral
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
                     addr <= 0;
                     tlast_in <= '1';              
-                end if;    
+                end if;   
             end if;
          end if;
       end if;
