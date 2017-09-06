@@ -22,20 +22,21 @@ architecture Behavioral of alu is
 
   type data_array is array(natural range <>) of std_logic_vector(7 downto 0);
   signal a_in, b_in: std_logic_vector(7 downto 0);
-  signal data_reg: data_array(2 downto 0);
-  signal result: std_logic_vector(15 downto 0);
+  --signal data_reg: data_array(2 downto 0);
+  signal result: std_logic_vector(16 downto 0);
+  signal result_tmp1, result_tmp2 : std_logic_vector(7 downto 0);
   signal op_code: std_logic_vector (2 downto 0);
   signal addr: integer := 0;
-  signal a_plus_b: std_logic_vector(15 downto 0);
-  signal a_minus_b: std_logic_vector(15 downto 0);
-  signal cout_sig : std_logic := '0';
+  signal a_plus_b: std_logic_vector(16 downto 0);
+  signal a_minus_b: std_logic_vector(16 downto 0);
+  signal cout_sig, cout_sig1, flag : std_logic := '0';
 
 begin  -- architecture Behavioral
 
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) - signed(b_in(b_in'high) & b_in));
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
-    a_minus_b(15 downto 9) <= "0000000";
-    a_plus_b(15 downto 9) <= "0000000";
+    a_minus_b(16 downto 9) <= "00000000";
+    a_plus_b(16 downto 9) <= "00000000";
 
 -- data instruction handling
  process (clk, reset, addr) is
@@ -77,11 +78,37 @@ begin  -- process
                       cout_sig <= result(8);
         when "100" => result <= std_logic_vector(signed(a_minus_b) srl 1);      --2*(a-b)
                       cout_sig <= result(8);
+        when "101" => result_tmp1 <= a_plus_b(7 downto 0);
+                      cout_sig1 <= a_plus_b(8);
+                      if flag = '1' then
+                        if cout_sig1 = '1' then
+                            result_tmp1 <= std_logic_vector(signed(result_tmp1) + 1);                            
+                        end if;
+                        result <= cout_sig1 & result_tmp1 & result_tmp2;
+                        cout_sig <= result(16);
+                        flag <= '0';
+                      else
+                        result_tmp2 <= result_tmp1;
+                        flag <= '1';
+                      end if;  
+        when "110" => result_tmp1 <= a_minus_b(7 downto 0);
+                      cout_sig1 <= a_minus_b(8);
+                      if flag = '1' then
+                        if cout_sig1 = '1' then
+                            result_tmp1 <= std_logic_vector(signed(result_tmp1) + 1);                            
+                        end if;
+                        result <= cout_sig1 & result_tmp1 & result_tmp2;
+                        cout_sig <= result(16);
+                        flag <= '0';
+                      else
+                        result_tmp2 <= result_tmp1;
+                        flag <= '1';
+                      end if;  
         when others => null;
       end case;   
     end if;
 
  end process;
-data_out <= result;
+data_out <= result(15 downto 0);
 cout <= cout_sig;
 end architecture Behavioral;
