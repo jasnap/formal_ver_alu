@@ -43,6 +43,10 @@ begin  -- architecture Behavioral
     if reset = '0' then                 -- asynchronous reset (active low)
       tready_out <= '1';
       tvalid_out <= '0';
+      a_in <= "00000000";
+      b_in <= "00000000";
+      op_code <= "000";
+      --result <= "00000000000000000";
     elsif clk'event and clk = '1' then  -- rising clock edge
         if tvalid_in = '1' then
           case addr is
