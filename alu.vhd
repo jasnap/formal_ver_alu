@@ -28,7 +28,7 @@ architecture Behavioral of alu is
   signal addr: integer := 0;
   signal a_plus_b: std_logic_vector(16 downto 0);
   signal a_minus_b: std_logic_vector(16 downto 0);
-  signal cout_sig, cout_sig1, flag1, flag2 : std_logic := '0';
+  signal cout_sig, cout_sig1, flag1, flag2, tvalid : std_logic := '0';
 
 begin  -- architecture Behavioral
 
@@ -59,6 +59,9 @@ begin  -- architecture Behavioral
                       addr <= addr + 1;
             when 3 => addr <= addr + 1;
             		  tvalid_out <= '1';
+            		  if (tvalid = '1') then
+            		      tvalid_out <= '0';
+            		  end if;
             when 4 => addr <= 0;
                       tready_out <= '1';
                       tvalid_out <= '0';
@@ -90,6 +93,7 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag1 <= '0';
+                        tvalid <= '1';
                       else
                         if addr = 2 then
                         	result_high <= a_plus_b(8 downto 0);
@@ -97,6 +101,7 @@ begin  -- process
                         	result_low <= a_plus_b(8 downto 0);
                         end if;
                         flag1 <= '1';
+                        tvalid <= '0';
                       end if;  
         when "110" => if flag2 = '1' then
                         if result_low(8) = '1' then
@@ -106,6 +111,7 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag2 <= '0';
+                        tvalid <= '1';
                       else
                       	if addr = 2 then
                         	result_high <= a_minus_b(8 downto 0);
@@ -113,6 +119,7 @@ begin  -- process
                         	result_low <= a_minus_b(8 downto 0);
                         end if;
                         flag2 <= '1';
+                        tvalid <= '0';
                       end if;  
         when others => null;
       end case;   
