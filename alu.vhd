@@ -9,18 +9,17 @@ entity alu is
     tvalid_in  : in  std_logic;
     clk        : in  std_logic;
     reset      : in  std_logic;
-    tready_in  : in std_logic;
-    tlast_in   : in std_logic;
+    tready_in  : in  std_logic;
+    tlast_in   : in  std_logic;
     data_out   : out std_logic_vector(15 downto 0);
     tvalid_out : out std_logic;
-    tready_out : out  std_logic;
+    tready_out : out std_logic;
     cout       : out std_logic);
 
 end entity alu;
 
 architecture Behavioral of alu is
 
- -- type data_array is array(natural range <>) of std_logic_vector(7 downto 0);
   signal a_in, b_in: std_logic_vector(7 downto 0);
   signal result: std_logic_vector(16 downto 0);
   signal result_low, result_high : std_logic_vector(8 downto 0);
@@ -32,13 +31,12 @@ architecture Behavioral of alu is
 
 begin  -- architecture Behavioral
 
-    a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) - signed(b_in(b_in'high) & b_in));
+    a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(not(b_in(b_in'high) & b_in)) + 1);
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
     a_minus_b(16 downto 9) <= "00000000";
     a_plus_b(16 downto 9) <= "00000000";
 
--- data instruction handling
- process (clk, reset, addr) is
+ process (clk, reset) is
   begin  -- process
     if reset = '0' then                 -- asynchronous reset (active low)
       tready_out <= '1';
@@ -46,7 +44,6 @@ begin  -- architecture Behavioral
       a_in <= "00000000";
       b_in <= "00000000";
       op_code <= "000";
-      --result <= "00000000000000000";
     elsif clk'event and clk = '1' then  -- rising clock edge
         if tvalid_in = '1' then
           case addr is
@@ -58,10 +55,10 @@ begin  -- architecture Behavioral
                       tready_out <= '0';
                       addr <= addr + 1;
             when 3 => addr <= addr + 1;
-            		  tvalid_out <= '1';
-            		  if (tvalid = '1') then
-            		      tvalid_out <= '0';
-            		  end if;
+                		  tvalid_out <= '1';
+                		  if (tvalid = '1') then
+                		      tvalid_out <= '0';
+                		  end if;
             when 4 => addr <= 0;
                       tready_out <= '1';
                       tvalid_out <= '0';
@@ -71,20 +68,25 @@ begin  -- architecture Behavioral
     end if;
   end process;
 
-process(clk, op_code) is
+process(clk) is
 begin  -- process
     if clk'event and clk = '1' then
      case op_code is
-        when "000" => result <= a_plus_b;                                       --a+b         
-                      cout_sig <= result(8);                  
-        when "001" => result <= a_minus_b;                                      --a-b
+        when "000" => result <= a_plus_b;                                                        --a+b         
+                      cout_sig <= result(8);   
+                      tvalid <= '0';               
+        when "001" => result <= a_minus_b;                                                       --a-b
                       cout_sig <= result(8);
+                      tvalid <= '0';
         when "010" => result(15 downto 0) <= std_logic_vector(unsigned(a_in) * unsigned(b_in));  --a*b
                       cout_sig <= '0';
-        when "011" => result <= std_logic_vector(unsigned(a_plus_b) sll 1);       --2*(a+b)
+                      tvalid <= '0';
+        when "011" => result <= std_logic_vector(unsigned(a_plus_b) sll 1);                      --2*(a+b)
                       cout_sig <= result(8);
-        when "100" => result <= std_logic_vector(unsigned(a_minus_b) sll 1);      --2*(a-b)
+                      tvalid <= '0';
+        when "100" => result <= std_logic_vector(unsigned(a_minus_b) sll 1);                     --2*(a-b)
                       cout_sig <= result(8);
+                      tvalid <= '0';
         when "101" => if flag1 = '1' then
                         if result_low(8) = '1' then
                             result(16 downto 8) <= std_logic_vector(unsigned(a_plus_b(8 downto 0)) + 1);
@@ -103,7 +105,7 @@ begin  -- process
                         flag1 <= '1';
                         tvalid <= '0';
                       end if;  
-        when "110" => if flag2 = '1' then
+        when "110" => if flag2 = '1' then                                                        --2*(a-b)
                         if result_low(8) = '1' then
                             result(16 downto 8) <= std_logic_vector(unsigned(a_minus_b(8 downto 0)) + 1);
                         else 
