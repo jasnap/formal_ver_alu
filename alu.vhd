@@ -31,6 +31,8 @@ architecture Behavioral of alu is
 
 begin  -- architecture Behavioral
 
+    --psl default clock is rising_edge(clk);
+
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(not(b_in(b_in'high) & b_in)) + 1);
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
     a_minus_b(16 downto 9) <= "00000000";
@@ -130,4 +132,11 @@ begin  -- process
  end process;
 data_out <= result(15 downto 0);
 cout <= cout_sig;
+
+--psl P1: assert always{tvalid_in; tready_out[*3]; not(tready_out)[*2]};
+--psl P2: assert never(tready_out -> tvalid_out);
+--psl P3: assert always{data_in < "00000101"; [*2]; not(tvalid_out)[*3]; tvalid_out};
+--psl P4: assert always{data_in > "00000101"; [*2]; not(tvalid_out)[*8]; tvalid_out};
+--psl P5: assert always{{data_out(8) -> cout} | {data_out(16) -> cout}};
+
 end architecture Behavioral;
