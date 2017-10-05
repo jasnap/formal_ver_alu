@@ -101,20 +101,15 @@ process(clk) is
 begin  -- process
     if clk'event and clk = '1' then
      case op is
-        when add => result <= a_plus_b;                                                        --a+b         
-                      cout_sig <= result(8);   
+        when add => result <= a_plus_b;                                                        --a+b           
                       tvalid <= '0';               
         when sub => result <= a_minus_b;                                                       --a-b
-                      cout_sig <= result(8);
                       tvalid <= '0';
         when mul => result(15 downto 0) <= std_logic_vector(unsigned(a_in) * unsigned(b_in));  --a*b
-                      cout_sig <= '0';
                       tvalid <= '0';
         when two_add8 => result <= std_logic_vector(unsigned(a_plus_b) sll 1);                      --2*(a+b)
-                      cout_sig <= result(8);
                       tvalid <= '0';
         when two_sub8 => result <= std_logic_vector(unsigned(a_minus_b) sll 1);                     --2*(a-b)
-                      cout_sig <= result(8);
                       tvalid <= '0';
         when two_add16 => if flag1 = '1' then
                         if result_low(8) = '1' then
@@ -124,7 +119,6 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag1 <= '0';
-						cout_sig<=result(16);
                         tvalid <= '1';
                       else
                         if addr = 2 then
@@ -143,7 +137,6 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag2 <= '0';
-						cout_sig<=result(16);
                         tvalid <= '1';
                       else
                       	if addr = 2 then
@@ -157,9 +150,24 @@ begin  -- process
         when others => null;
       end case;   
     end if;
-
  end process;
+
+process (result, op) is
+begin
+	case( op ) is
+	
+		when add => cout <= result(8);
+		when sub =>	cout <= result(8);
+		when mul => cout <= '0';
+		when two_add8 => cout <= result(8);
+		when two_sub8 => cout <= result(8);
+		when two_add16 => cout <= result(16);
+		when two_sub16 => cout <= result(16);
+		when others =>
+	
+	end case ;
+end process;
+
 data_out <= result(15 downto 0);
-cout <= cout_sig;
 
 end architecture Behavioral;
