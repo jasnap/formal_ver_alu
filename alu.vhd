@@ -20,25 +20,31 @@ end entity alu;
 
 architecture Behavioral of alu is
 
+  type t_op_code is(add, sub, mul, two_add8, two_sub8,two_add16, two_sub16, op_error);
   signal a_in, b_in: std_logic_vector(7 downto 0);
   signal result: std_logic_vector(16 downto 0);
   signal result_low, result_high : std_logic_vector(8 downto 0);
-  signal op_code: std_logic_vector (2 downto 0);
+  signal op: t_op_code;
+  signal op_code: std_logic_vector(2 downto 0);
   signal addr: integer := 0;
   signal a_plus_b: std_logic_vector(16 downto 0);
   signal a_minus_b: std_logic_vector(16 downto 0);
-  signal cout_sig, flag1, flag2, tvalid : std_logic := '0';
+  signal cout_sig, cout_sig1, flag1, flag2, tvalid : std_logic := '0';
 
 begin  -- architecture Behavioral
 
-    --asserts that must pass
-
     --psl default clock is rising_edge(clk);
-    --psl reset_p: assert always(not (reset) -> not(tvalid_out));
-    --psl tvalid_active: assert always(tvalid_out -> next (not (tvalid_out)));
-    --psl tready_tvalid: assert always(not tready_out -> next (tvalid_out));
-    --psl cout_tvalid: assert always (not tvalid_out -> not cout);
-    -- check if tvalid_in -> tready mora biti aktivan 3 clk
+	--psl reset_a: assert always(not reset -> not tvalid_out);
+	--psl tready_tvalid: assert always(tready_out -> not (tvalid_out));
+	--psl tready_tvalid2: assert always(tvalid_out -> not tready_out);
+	--psl tready_oneclk: assert always((tvalid_in and tvalid_out) -> next(not tvalid_out));
+	--psl cout_1: assert always(((tvalid_in = '1') and (op = add)) and (data_out(8) = '1')) -> next(cout);
+	--psl cout_2: assert always(((tvalid_in = '1') and (op = sub)) and (data_out(8) = '1')) -> next(cout);
+	--psl cout_4: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> next(cout);
+	--psl cout_5: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> next(cout);
+	--psl cout_6: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> next(cout);
+	--psl cout_7: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> next(cout);
+
 
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(not(b_in(b_in'high) & b_in)) + 1);
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
@@ -54,7 +60,7 @@ begin  -- architecture Behavioral
       b_in <= "00000000";
       op_code <= "000";
     elsif clk'event and clk = '1' then  -- rising clock edge
-        if tvalid_in = '1' then
+        if tvalid_in = '1' then --and tready_in?
           case addr is
             when 0 => op_code <= data_in(2 downto 0);
                       addr <= addr + 1;
@@ -77,26 +83,40 @@ begin  -- architecture Behavioral
     end if;
   end process;
 
+process(op_code)is 
+begin
+	case(op_code) is
+		when "000" => op <= add;
+		when "001" => op <= sub;
+		when "010" => op <= mul;
+		when "011" => op <= two_add8;
+		when "100" => op <= two_sub8;
+		when "101" => op <= two_add16;
+		when "110" => op <= two_sub16;
+		when others => op <= op_error;
+	end case;
+end process;
+
 process(clk) is
 begin  -- process
     if clk'event and clk = '1' then
-     case op_code is
-        when "000" => result <= a_plus_b;                                                        --a+b         
+     case op is
+        when add => result <= a_plus_b;                                                        --a+b         
                       cout_sig <= result(8);   
                       tvalid <= '0';               
-        when "001" => result <= a_minus_b;                                                       --a-b
+        when sub => result <= a_minus_b;                                                       --a-b
                       cout_sig <= result(8);
                       tvalid <= '0';
-        when "010" => result(15 downto 0) <= std_logic_vector(unsigned(a_in) * unsigned(b_in));  --a*b
+        when mul => result(15 downto 0) <= std_logic_vector(unsigned(a_in) * unsigned(b_in));  --a*b
                       cout_sig <= '0';
                       tvalid <= '0';
-        when "011" => result <= std_logic_vector(unsigned(a_plus_b) sll 1);                      --2*(a+b)
+        when two_add8 => result <= std_logic_vector(unsigned(a_plus_b) sll 1);                      --2*(a+b)
                       cout_sig <= result(8);
                       tvalid <= '0';
-        when "100" => result <= std_logic_vector(unsigned(a_minus_b) sll 1);                     --2*(a-b)
+        when two_sub8 => result <= std_logic_vector(unsigned(a_minus_b) sll 1);                     --2*(a-b)
                       cout_sig <= result(8);
                       tvalid <= '0';
-        when "101" => if flag1 = '1' then
+        when two_add16 => if flag1 = '1' then
                         if result_low(8) = '1' then
                             result(16 downto 8) <= std_logic_vector(unsigned(a_plus_b(8 downto 0)) + 1);
                         else 
@@ -104,6 +124,7 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag1 <= '0';
+						cout_sig<=result(16);
                         tvalid <= '1';
                       else
                         if addr = 2 then
@@ -114,7 +135,7 @@ begin  -- process
                         flag1 <= '1';
                         tvalid <= '0';
                       end if;  
-        when "110" => if flag2 = '1' then                                                        --2*(a-b)
+        when two_sub16 => if flag2 = '1' then                                                        --2*(a-b)
                         if result_low(8) = '1' then
                             result(16 downto 8) <= std_logic_vector(unsigned(a_minus_b(8 downto 0)) + 1);
                         else 
@@ -122,6 +143,7 @@ begin  -- process
                         end if;
                         result(7 downto 0) <= result_low(7 downto 0);
                         flag2 <= '0';
+						cout_sig<=result(16);
                         tvalid <= '1';
                       else
                       	if addr = 2 then
@@ -139,4 +161,5 @@ begin  -- process
  end process;
 data_out <= result(15 downto 0);
 cout <= cout_sig;
+
 end architecture Behavioral;
