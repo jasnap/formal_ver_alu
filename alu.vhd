@@ -27,11 +27,18 @@ architecture Behavioral of alu is
   signal addr: integer := 0;
   signal a_plus_b: std_logic_vector(16 downto 0);
   signal a_minus_b: std_logic_vector(16 downto 0);
-  signal cout_sig, cout_sig1, flag1, flag2, tvalid : std_logic := '0';
+  signal cout_sig, flag1, flag2, tvalid : std_logic := '0';
 
 begin  -- architecture Behavioral
 
+    --asserts that must pass
+
     --psl default clock is rising_edge(clk);
+    --psl reset_p: assert always(not (reset) -> not(tvalid_out));
+    --psl tvalid_active: assert always(tvalid_out -> next (not (tvalid_out)));
+    --psl tready_tvalid: assert always(not tready_out -> next (tvalid_out));
+    --psl cout_tvalid: assert always (not tvalid_out -> not cout);
+    -- check if tvalid_in -> tready mora biti aktivan 3 clk
 
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(not(b_in(b_in'high) & b_in)) + 1);
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
@@ -132,11 +139,4 @@ begin  -- process
  end process;
 data_out <= result(15 downto 0);
 cout <= cout_sig;
-
---psl P1: assert always{tvalid_in; tready_out[*3]; not(tready_out)[*2]};
---psl P2: assert never(tready_out -> tvalid_out);
---psl P3: assert always{data_in < "00000101"; [*2]; not(tvalid_out)[*3]; tvalid_out};
---psl P4: assert always{data_in > "00000101"; [*2]; not(tvalid_out)[*8]; tvalid_out};
---psl P5: assert always{{data_out(8) -> cout} | {data_out(16) -> cout}};
-
 end architecture Behavioral;
