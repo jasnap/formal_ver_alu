@@ -10,7 +10,6 @@ entity alu is
     clk        : in  std_logic;
     reset      : in  std_logic;
     tready_in  : in  std_logic;
-    tlast_in   : in  std_logic;
     data_out   : out std_logic_vector(15 downto 0);
     tvalid_out : out std_logic;
     tready_out : out std_logic;

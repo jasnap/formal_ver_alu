@@ -39,7 +39,6 @@ architecture Behavioral of alu_tb is
   signal tvalid_in  : std_logic;
   signal reset      : std_logic;
   signal tready_in  : std_logic;
-  signal tlast_in   : std_logic;
   signal data_out   : std_logic_vector(15 downto 0);
   signal tvalid_out : std_logic;
   signal tready_out : std_logic;
@@ -58,7 +57,6 @@ begin  -- architecture Behavioral
       clk        => clk,
       reset      => reset,
       tready_in  => tready_in,
-      tlast_in   => tlast_in,
       data_out   => data_out,
       tvalid_out => tvalid_out,
       tready_out => tready_out);
@@ -79,7 +77,6 @@ begin  -- architecture Behavioral
         addr <= 0;
         data_in <= std_logic_vector(to_unsigned(opc, 8));
         tvalid_in <= '0';
-        tlast_in <= '0';
      else
         if Clk'event and Clk = '1' then
             if tready_out = '1' then
@@ -87,7 +84,6 @@ begin  -- architecture Behavioral
                 if addr = 0 then
                     data_in <= std_logic_vector(to_unsigned(opc, 8));  
                     addr <= addr + 1;
-                    tlast_in <= '0';
                     if opc = 6 then
                       if tr_num = 1 then 
                        tr_num := 0;
@@ -113,8 +109,7 @@ begin  -- architecture Behavioral
                  elsif addr = 2 then
                     uniform(seed1, seed2, rand);
                     data_in <= std_logic_vector(to_unsigned(integer(rand*range_of_rand), 8));
-                    addr <= 0;
-                    tlast_in <= '1';              
+                    addr <= 0;            
                 end if;   
             end if;
          end if;
@@ -123,15 +118,5 @@ begin  -- architecture Behavioral
 
   end process WaveGen_Proc;
 
-  
-
 end architecture Behavioral;
 
--------------------------------------------------------------------------------
-
---configuration alu_tb_Behavioral_cfg of alu_tb is
---  for Behavioral
---  end for;
---end alu_tb_Behavioral_cfg;
-
--------------------------------------------------------------------------------
