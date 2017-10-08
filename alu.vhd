@@ -38,13 +38,12 @@ begin  -- architecture Behavioral
 	--psl tready_tvalid: assert always(tready_out -> not (tvalid_out));
 	--psl tready_tvalid2: assert always(tvalid_out -> not tready_out);
 	--psl tready_oneclk: assert always((tvalid_in and tvalid_out) -> next(not tvalid_out));
-	--psl cout_1: assert always(((tvalid_in = '1') and (op = add)) and (data_out(8) = '1')) -> next(cout);
-	--psl cout_2: assert always(((tvalid_in = '1') and (op = sub)) and (data_out(8) = '1')) -> next(cout);
-	--psl cout_4: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> next(cout);
-	--psl cout_5: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> next(cout);
-	--psl cout_6: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> next(cout);
-	--psl cout_7: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> next(cout);
-
+	--psl cout_1: assert always(((tvalid_in = '1') and (op = add)) and (data_out(8) = '1')) -> cout;
+	--psl cout_2: assert always(((tvalid_in = '1') and (op = sub)) and (data_out(8) = '1')) -> cout;
+	--psl cout_4: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> cout;
+	--psl cout_5: assert always(((tvalid_in = '1') and (op = two_add8)) and (data_out(8) = '1')) -> cout;
+	--psl cout_6: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> cout;
+	--psl cout_7: assert always(((tvalid_in = '1') and (op = two_add16)) and (result(16) = '1')) -> cout;
 
     a_minus_b(8 downto 0) <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(not(b_in(b_in'high) & b_in)) + 1);
     a_plus_b(8 downto 0)  <= std_logic_vector(signed(a_in(a_in'high) & a_in) + signed(b_in(b_in'high) & b_in));
@@ -79,6 +78,10 @@ begin  -- architecture Behavioral
                       tvalid_out <= '0';
             when others => null;
           end case;
+        else
+        --	result <= "0000000000000000";
+        	tvalid_out <= '0';
+        --	tready_out <= '0';
         end if;       
     end if;
   end process;
@@ -163,11 +166,25 @@ begin
 		when two_sub8 => cout <= result(8);
 		when two_add16 => cout <= result(16);
 		when two_sub16 => cout <= result(16);
-		when others =>
+		when others => null;
 	
 	end case ;
 end process;
 
 data_out <= result(15 downto 0);
+
+--psl result_add: assert always((op = add) and (tvalid_out = '1'))-> result = a_plus_b;
+--psl result_sub: assert always((op = sub) and (tvalid_out = '1'))-> result = a_minus_b;
+--psl result_mul: assert always((op = mul) and (tvalid_out = '1'))-> result(15 downto 0) = std_logic_vector(unsigned(a_in) * unsigned(b_in));
+--psl result_two_add8: assert always((op = two_add8) and (tvalid_out = '1'))-> result = std_logic_vector(unsigned(a_plus_b) sll 1);
+--psl result_two_sub8: assert always((op = two_sub8) and (tvalid_out = '1'))-> result = std_logic_vector(unsigned(a_minus_b) sll 1);
+--psl result_two_add8_1: assert always(((op = two_add16) and (tvalid_out = '1')) and result_low(8) = '0')-> result(7 downto 0) = result_low(7 downto 0) and result(16 downto 8) = a_plus_b(8 downto 0);
+--psl result_two_add16_2: assert always(((op = two_add16) and (tvalid_out = '1')) and result_low(8) = '1')-> result(7 downto 0) = result_low(7 downto 0) and result(16 downto 8) = std_logic_vector(unsigned(a_plus_b(8 downto 0)) + 1);
+--psl result_two_sub16_1: assert always((op = two_add16) and (tvalid_out = '1')) and result_low(8) = '0'-> result(7 downto 0) = result_low(7 downto 0) and result(16 downto 8) = a_plus_b(8 downto 0);
+--psl result_two_sub16_2: assert always((op = two_add16) and (tvalid_out = '1')) and result_low(8) = '1'-> result(7 downto 0) = result_low(7 downto 0) and result(16 downto 8) = std_logic_vector(unsigned(a_plus_b(8 downto 0)) + 1);
+
+--psl data_out_result: assert always(tvalid_out -> data_out = result(15 downto 0));
+
+
 
 end architecture Behavioral;
